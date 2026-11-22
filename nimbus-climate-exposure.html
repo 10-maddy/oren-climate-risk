@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nimbus Cement: climate exposure (MVP 1 prototype)</title>
+<meta name="description" content="Prototype: where Nimbus Cement's revenue sits against heat and water-stress hazards, today and about 2040. Plant data is invented for an assessment exercise.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400;7..72,600&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EEF0EC; --surface:#F7F8F5; --ink:#1D2630; --muted:#56626D; --faint:#7B8791; --rule:#D3D8D1;
+  --hi:#4A1442; --mid:#94468A; --lo:#C09ABA; --fed:#5F6B76; --none:#C9CCC8;
+  --serif:'Literata',Georgia,'Times New Roman',serif;
+  --sans:'Public Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:70px}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--serif);font-size:17px;line-height:1.6}
+a{color:var(--ink);text-underline-offset:3px}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px;border-radius:2px}
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+.sans{font-family:var(--sans)}
+
+/* app shell */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+.side{background:var(--ink);color:#DDE2DE;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;padding:18px 12px;font-family:var(--sans);z-index:30}
+.logo{display:flex;align-items:center;gap:10px;padding:4px 8px 18px;font-weight:600;font-size:15px;color:#fff}
+.logo svg{flex:none}
+.logo small{display:block;font-weight:400;font-size:12px;color:#9AA5AE}
+.side nav{display:flex;flex-direction:column;gap:2px}
+.side nav a{display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:5px;color:#C5CCD2;text-decoration:none;font-size:14.5px}
+.side nav a svg{flex:none;opacity:.85}
+.side nav a:hover{background:rgba(255,255,255,.07);color:#fff}
+.side nav a[aria-current="page"]{background:rgba(255,255,255,.13);color:#fff;font-weight:600}
+.side .sep{height:1px;background:rgba(255,255,255,.12);margin:12px 8px}
+.side .foot{margin-top:auto;padding:12px 10px 0;font-size:12.5px;line-height:1.5;color:#9AA5AE;border-top:1px solid rgba(255,255,255,.12)}
+.side .foot b{color:#DDE2DE;font-weight:600}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#7FB88F;margin-right:6px}
+.main{min-width:0;overflow-x:hidden}
+.top{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:18px 28px;flex-wrap:wrap;padding:10px 28px;min-height:60px;font-family:var(--sans)}
+.top h2{font-family:var(--sans);font-size:17px;font-weight:600;margin:0;letter-spacing:0}
+.top .ctl{display:flex;align-items:center;gap:22px;flex-wrap:wrap;margin-left:auto;font-size:14px}
+.top .ctl[hidden]{display:none}
+.top .cg{display:flex;align-items:center;gap:10px}
+.top .cg > span.lab{color:var(--muted);margin:0}
+.top .fbbtn{margin-left:auto}
+.top .ctl + .fbbtn{margin-left:0}
+.content{padding:22px 28px 70px}
+.notice{background:var(--surface);border:1px solid var(--rule);border-left:3px solid var(--hi);border-radius:4px;font-family:var(--sans);font-size:13.5px;line-height:1.5;padding:10px 14px;margin-bottom:22px;display:flex;gap:12px;align-items:flex-start}
+.notice strong{font-weight:600}
+.notice button{margin-left:auto;flex:none;background:none;border:0;cursor:pointer;color:var(--muted);font-family:var(--sans);font-size:13px;text-decoration:underline}
+.wrap{max-width:1120px;margin:0 auto}
+.view{display:none}
+.view.on{display:block}
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:24px 26px;margin-bottom:20px}
+.panel > h2{font-size:21px;margin-bottom:6px}
+h1,h2,h3{font-family:var(--serif);font-weight:600;letter-spacing:-0.01em;margin:0}
+h1{font-size:clamp(22px,2.6vw,30px);line-height:1.28;max-width:30em}
+h2{font-size:24px;line-height:1.25;margin-bottom:10px}
+h3{font-size:19px;line-height:1.3}
+.lede{max-width:44em;color:var(--muted);margin:12px 0 0;font-size:16px}
+.intro{max-width:44em;color:var(--muted);margin:0 0 22px;font-size:16px}
+.tag{font-family:var(--sans);font-size:12px;font-weight:500;color:var(--muted);border:1px solid var(--rule);border-radius:3px;padding:1px 6px;white-space:nowrap;background:var(--surface)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:20px;font-family:var(--sans)}
+.kpi{all:unset;box-sizing:border-box;display:block;cursor:pointer;background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:14px 16px;transition:border-color .15s,box-shadow .15s}
+.kpi:hover{border-color:var(--ink);box-shadow:0 2px 8px rgba(29,38,48,.12)}
+.kpi:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.kpi[aria-pressed="true"]{border-color:var(--hi);box-shadow:inset 0 0 0 1px var(--hi);background:#fff}
+.kpi .go{display:flex;align-items:center;gap:4px;margin-top:8px;font-size:13px;font-weight:600;color:var(--hi)}
+.kpi[aria-pressed="true"] .go{color:var(--ink)}
+.kpi span{display:block;font-size:13px;color:var(--muted)}
+.kpi b{display:block;font-family:var(--serif);font-size:26px;font-weight:600;margin-top:2px}
+.kpi small{color:var(--muted);font-size:12.5px}
+
+/* glossary terms */
+.term{all:unset;cursor:help;border-bottom:1px dotted var(--muted);color:inherit}
+.term:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+#pop{position:absolute;z-index:60;max-width:300px;background:var(--ink);color:#F2F4F0;font-family:var(--sans);font-size:13.5px;line-height:1.45;padding:10px 12px;border-radius:4px;box-shadow:0 6px 24px rgba(29,38,48,.25);display:none}
+#pop b{display:block;font-weight:600;margin-bottom:2px}
+#tip{position:fixed;z-index:70;pointer-events:none;background:var(--ink);color:#F2F4F0;font-family:var(--sans);font-size:13px;padding:6px 9px;border-radius:4px;display:none;white-space:nowrap}
+#tip b{font-weight:600}
+
+/* headline bar */
+.controls{display:flex;flex-wrap:wrap;gap:20px 36px;align-items:flex-end;margin:34px 0 22px;font-family:var(--sans);font-size:14px}
+.controls label,.controls .lab{display:block;color:var(--muted);margin-bottom:6px}
+.seg{display:inline-flex;border:1px solid var(--ink);border-radius:4px;overflow:hidden}
+.seg button{background:transparent;border:0;padding:7px 16px;cursor:pointer;font-family:var(--sans);font-size:14px}
+.seg button[aria-pressed="true"]{background:var(--ink);color:#F2F4F0}
+.slider{display:flex;align-items:center;gap:12px}
+.slider input[type=range]{width:220px;accent-color:var(--hi)}
+.slider output{font-weight:600;min-width:7ch}
+.linkbtn{background:none;border:0;padding:0;text-decoration:underline;text-underline-offset:3px;cursor:pointer;color:var(--muted);font-family:var(--sans);font-size:14px}
+.split{display:flex;gap:2px;height:30px;width:100%}
+.split div{display:flex;align-items:center;padding:0 10px;font-family:var(--sans);font-size:14px;font-weight:600;border-radius:4px;white-space:nowrap;overflow:visible;min-width:0}
+.split .s-hi{background:var(--hi);color:#fff}
+.split .s-fed{background:var(--fed);color:#fff}
+.split .s-none{background:var(--none);color:var(--ink)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 28px;margin-top:14px;font-family:var(--sans);font-size:14px}
+.legend span{display:inline-flex;align-items:baseline;gap:8px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:2px;flex:none;transform:translateY(1px)}
+.legend small{color:var(--muted);font-size:13px}
+
+/* table */
+.tablewrap{overflow-x:auto;border-top:1px solid var(--ink)}
+table.plants{width:100%;border-collapse:collapse;font-family:var(--sans);font-size:14px;min-width:900px}
+table.plants th{font-weight:600;text-align:left;padding:12px 10px 12px 0;border-bottom:1px solid var(--rule);vertical-align:bottom;color:var(--muted)}
+table.plants td{padding:14px 10px 14px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+table.plants tr.row{cursor:pointer}
+table.plants tr.row:hover td{background:#fff}
+.hint{font-family:var(--sans);font-size:13.5px;color:var(--muted);display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:0 0 12px;min-height:30px}
+.chip{display:inline-flex;gap:8px;align-items:center;background:#fff;border:1px solid var(--hi);border-radius:999px;padding:3px 6px 3px 12px;color:var(--ink);font-weight:600}
+.chip button{background:var(--ink);color:#fff;border:0;border-radius:999px;cursor:pointer;font-family:var(--sans);font-size:12.5px;padding:2px 10px}
+.opn{display:inline-flex;align-items:center;gap:4px;font-weight:600;color:var(--hi);white-space:nowrap;border:1px solid var(--rule);border-radius:4px;padding:5px 9px;background:var(--surface)}
+table.plants tr.row:hover .opn,table.plants tr.row:focus-within .opn{background:var(--hi);color:#fff;border-color:var(--hi)}
+table.plants th:first-child,table.plants td:first-child{padding-left:12px}
+table.plants tr.row:hover td:first-child{box-shadow:inset 3px 0 0 var(--hi)}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.pname{all:unset;cursor:pointer;font-weight:600;font-size:15px;display:block;text-decoration:underline;text-decoration-color:var(--faint);text-underline-offset:3px}
+.pname:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.sub{display:block;color:var(--muted);font-size:13px;line-height:1.4;margin-top:4px}
+.pill{font-family:var(--sans);display:inline-block;font-weight:600;font-size:13px;padding:2px 9px;border-radius:3px}
+.pill.hi{background:var(--hi);color:#fff}
+.pill.mid{background:var(--mid);color:#fff}
+.pill.lo{background:var(--lo);color:#2A1226}
+.revbar{display:flex;align-items:center;gap:10px}
+.revbar i{display:block;height:14px;border-radius:0 4px 4px 0;flex:none}
+.revbar i.hi{background:var(--hi)}.revbar i.mid{background:var(--mid)}.revbar i.lo{background:var(--lo)}
+.revbar b{font-weight:600;white-space:nowrap}
+.near{color:var(--ink);font-weight:500}
+
+/* drawer */
+#drawer{position:fixed;top:0;right:0;bottom:0;width:min(560px,100%);background:var(--surface);border-left:1px solid var(--ink);z-index:50;transform:translateX(102%);transition:transform .25s ease;overflow-y:auto;padding:22px 26px 60px}
+#drawer.open{transform:none}
+#drawer .x{position:absolute;top:14px;right:16px;font-family:var(--sans);background:none;border:1px solid var(--ink);border-radius:4px;padding:5px 12px;cursor:pointer;font-size:14px}
+#drawer h2{font-size:25px;margin:6px 60px 4px 0}
+.facts{font-family:var(--sans);font-size:14px;color:var(--muted);margin:0 0 18px}
+.hz{border-top:1px solid var(--rule);padding:18px 0}
+.hz h3{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.hz p{margin:0 0 10px;font-size:16px}
+details{font-family:var(--sans);font-size:14px;margin-top:8px}
+summary{cursor:pointer;font-weight:500;padding:4px 0}
+details .src{color:var(--muted);font-size:13px;margin:8px 0 0}
+.chart{width:100%;height:auto;display:block;margin-top:8px}
+.chart text{font-family:var(--sans)}
+.twin{border-collapse:collapse;font-size:12.5px;margin-top:8px}
+.twin th,.twin td{padding:3px 7px;border-bottom:1px solid var(--rule);text-align:right;font-variant-numeric:tabular-nums}
+.twin th:first-child{text-align:left}
+.scrollx{overflow-x:auto}
+#scrim{position:fixed;inset:0;background:rgba(29,38,48,.28);z-index:45;display:none}
+#scrim.on{display:block}
+
+/* what-if */
+.wi{display:grid;grid-template-columns:minmax(260px,340px) 1fr;gap:44px;font-family:var(--sans);font-size:14px;align-items:start}
+.wi .field{margin-bottom:20px}
+.wi label{display:block;color:var(--muted);margin-bottom:6px}
+.wi select{font:inherit;padding:8px 10px;border:1px solid var(--ink);border-radius:4px;background:var(--surface);width:100%}
+.wi .slider input{width:100%}
+.wi .out{font-family:var(--serif);font-size:21px;line-height:1.4;max-width:30em;margin-bottom:22px}
+.wi .out b{font-weight:600}
+.bars{font-family:var(--sans);font-size:14px;max-width:560px}
+.bars .r{display:grid;grid-template-columns:150px 1fr;gap:12px;align-items:center;margin-bottom:10px}
+.bars .r div.b{display:flex;align-items:center;gap:10px}
+.bars .r i{display:block;height:16px;background:var(--fed);border-radius:0 4px 4px 0}
+.bars .r b{font-weight:600}
+.formula{color:var(--muted);font-size:13.5px;max-width:40em;margin-top:18px}
+
+/* next version */
+.next{border-top:1px solid var(--ink)}
+.next .it{display:grid;grid-template-columns:minmax(200px,300px) 1fr auto;gap:12px 36px;padding:20px 0;border-bottom:1px solid var(--rule);align-items:start}
+.next h3{font-size:19px}
+.next p{margin:0;font-size:16px;color:var(--ink)}
+.next .need{font-family:var(--sans);font-size:13.5px;color:var(--muted);margin-top:6px;display:block}
+.btn{font-family:var(--sans);font-size:14px;font-weight:500;background:var(--ink);color:#F2F4F0;border:1px solid var(--ink);border-radius:4px;padding:8px 16px;cursor:pointer;text-decoration:none;display:inline-block}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn[aria-disabled="true"]{opacity:.55;cursor:not-allowed}
+
+/* feedback */
+.fb ol{max-width:40em;padding-left:22px}
+.fb li{margin-bottom:8px}
+
+/* handover */
+.ticket{background:var(--surface);border:1px solid var(--ink);padding:30px 34px;font-family:var(--sans);font-size:14px;line-height:1.5}
+.ticket h2{font-family:var(--serif);font-size:24px;margin-bottom:4px}
+.ticket .meta{color:var(--muted);margin:0 0 16px}
+.ticket h3{font-family:var(--sans);font-size:15px;font-weight:600;margin:16px 0 4px}
+.ticket p{margin:0 0 6px}
+.ticket ul,.ticket ol{margin:0 0 6px;padding-left:20px}
+.ticket li{margin-bottom:3px}
+.ticket table{border-collapse:collapse;width:100%;font-size:13px;margin:4px 0 6px}
+.ticket th,.ticket td{border-bottom:1px solid var(--rule);padding:4px 8px 4px 0;text-align:left;vertical-align:top}
+.ticket-actions{display:flex;gap:12px;margin:0 0 16px;flex-wrap:wrap}
+
+/* method */
+.src-table{width:100%;border-collapse:collapse;font-family:var(--sans);font-size:14px;margin-bottom:34px}
+.src-table th{text-align:left;color:var(--muted);font-weight:600;padding:8px 14px 8px 0;border-bottom:1px solid var(--ink)}
+.src-table td{padding:10px 14px 10px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+.cols2{columns:2 340px;column-gap:48px;font-family:var(--sans);font-size:14px}
+.cols2 dt{font-weight:600;break-after:avoid;margin-top:12px}
+.cols2 dd{margin:2px 0 0;color:var(--muted);break-inside:avoid}
+ol.asm{font-family:var(--sans);font-size:14px;padding-left:0;list-style:none;max-width:52em}
+ol.asm li{display:grid;grid-template-columns:36px 1fr;padding:8px 0;border-bottom:1px solid var(--rule)}
+footer{padding:48px 0 70px;font-family:var(--sans);font-size:13.5px;color:var(--muted)}
+
+@media (max-width:820px){
+  .wi{grid-template-columns:1fr;gap:24px}
+  .next .it{grid-template-columns:1fr}
+  .app{grid-template-columns:minmax(0,1fr)}
+  .side nav a{white-space:nowrap}
+  .top .ctl{margin-left:0}
+  .top .slider input{width:120px}
+  .panel{padding:18px 16px}
+  .side{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;padding:10px 12px}
+  .side nav{flex-direction:row;overflow-x:auto}
+  .side .foot,.side .sep{display:none}
+  .logo{padding:4px 10px 4px 4px}
+  .top{position:static}
+  .content{padding:18px 16px 60px}
+}
+@media (prefers-reduced-motion:reduce){#drawer{transition:none}html{scroll-behavior:auto}}
+@media print{
+  @page{size:A4;margin:10mm}
+  body{background:#fff;font-size:9pt}
+  .side,.top,.notice,#drawer,#scrim,#pop,#tip,footer,.view:not(#handover),.ticket-actions,.noprint{display:none!important}
+  .app{display:block}.content{padding:0}
+  #handover{display:block!important}.panel{border:0;padding:0;margin:0}
+  #handover .intro,#handover .panel > h2{display:none}
+  .ticket{border:0;padding:0;font-size:8.1pt;line-height:1.32;column-count:2;column-gap:7mm}
+  .ticket h2{font-size:12pt;column-span:all}
+  .ticket .meta{column-span:all;margin-bottom:6px}
+  .ticket h3{font-size:9pt;margin:7px 0 2px;break-after:avoid}
+  .ticket li{margin-bottom:1px;break-inside:avoid}
+  .ticket table{font-size:7.6pt}
+}
+</style>
+</head>
+<body>
+<noscript><p style="padding:24px;font-family:sans-serif">This prototype needs JavaScript to show its figures.</p></noscript>
+
+<div class="app">
+<aside class="side" aria-label="Main">
+  <div class="logo"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect width="30" height="30" rx="7" fill="#94468A"/><path d="M8 21V10l7 7 7-7v11" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Nimbus<small>Climate exposure</small></span></div>
+  <nav><a href="#/dashboard" data-nav="dashboard"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>Exposure</a><a href="#/whatif" data-nav="whatif"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>What if</a><a href="#/next" data-nav="next"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Next version</a><a href="#/feedback" data-nav="feedback"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Feedback</a><a href="#/handover" data-nav="handover"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h6"/></svg>Handover</a><a href="#/method" data-nav="method"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>Sources</a></nav>
+  <div class="foot"><span class="dot"></span><b>Data pulled 22 Nov 2026</b><br>NASA POWER, Open-Meteo, WRI Aqueduct. Sample company, invented data. <span class="tag" style="background:transparent;color:#C5CCD2;border-color:rgba(255,255,255,.25)">MVP 1</span></div>
+</aside>
+<div class="main">
+<header class="top">
+  <h2 id="page-title">Exposure</h2>
+  <div class="ctl" id="ctl">
+    <div class="cg"><span class="lab" id="lab-view">View</span>
+      <div class="seg" role="group" aria-labelledby="lab-view"><button type="button" id="v-now" aria-pressed="true">Today</button><button type="button" id="v-40" aria-pressed="false">About 2040</button></div></div>
+    <div class="cg"><label class="lab" for="thr">Heat cut-off <span class="tag">Our assumption</span></label>
+      <div class="slider"><input id="thr" type="range" min="40" max="70" step="1" value="55"><output id="thr-out" for="thr"></output><button type="button" class="linkbtn" id="thr-reset">Reset</button></div></div>
+  </div>
+  <a class="btn ghost fbbtn" href="#/feedback">Give feedback</a>
+</header>
+<div class="content"><div class="wrap">
+<div class="notice" id="notice" role="note"><div><strong>Read this first.</strong> Every hazard figure here comes from outside organisations and is model-based. Their models get updated, so these numbers can change. Nimbus Cement and its plant data are invented for an assessment exercise. Underlined words explain themselves on hover, tap or tab. <a href="#/method">Sources and cautions</a></div><button type="button" id="notice-x">Hide</button></div>
+<main>
+<section class="view" id="dashboard" aria-labelledby="h-over">
+  <div class="panel">
+    <h1 id="h-over"></h1>
+    <p class="lede" id="lede"></p>
+    <div style="margin-top:24px"><div id="split" role="img"></div><div class="legend" id="legend"></div></div>
+    <p class="intro" id="split-note" style="margin:18px 0 0"></p>
+  </div>
+  <div class="kpis" id="kpis"></div>
+  <div class="panel">
+    <h2 id="h-plants">Plant by plant</h2>
+    <p class="intro" style="margin-bottom:16px">Each plant is rated on heat, and on water stress where it depends on local fresh water. River flood is shown but not rated. Select a plant to see why it is rated the way it is.</p>
+    <div class="hint" id="thint" aria-live="polite"></div>
+    <div class="tablewrap"><table class="plants" id="ptable"></table></div>
+  </div>
+</section>
+<section class="view" id="whatif" aria-labelledby="h-wi"><div class="panel">
+    <h2 id="h-wi">What if a plant stops?</h2>
+    <p class="intro">A worked example with inputs you can change. <span class="tag">Illustrative inputs</span> It is not a forecast of what will happen.</p>
+    <div class="wi">
+      <div>
+        <div class="field"><label for="wi-plant">Plant that stops</label><select id="wi-plant"></select></div>
+        <div class="field"><label for="wi-days">Days stopped: <b id="wi-days-o"></b></label><div class="slider"><input id="wi-days" type="range" min="0" max="90" step="1" value="14"></div></div>
+        <div class="field"><label for="wi-buf">Clinker stock at grinding units, in days: <b id="wi-buf-o"></b></label><div class="slider"><input id="wi-buf" type="range" min="0" max="30" step="1" value="7"></div></div>
+        <button type="button" class="linkbtn" id="wi-reset">Reset to the example</button>
+      </div>
+      <div><p class="out" id="wi-out"></p><div class="bars" id="wi-bars"></div><p class="formula" id="wi-formula"></p></div>
+    </div></div></section>
+<section class="view" id="next" aria-labelledby="h-next"><div class="panel">
+    <h2 id="h-next">Coming in the next version</h2>
+    <p class="intro">What this first version leaves out, and why. Tell us which of these you would use first.</p>
+    <div class="next" id="next-list"></div></div></section>
+<section class="view fb" id="feedback" aria-labelledby="h-fb"><div class="panel">
+    <h2 id="h-fb">Help shape the next version</h2>
+    <p class="intro">This is a first version, so your reaction matters more than polish. The form takes about three minutes.</p>
+    <ol>
+      <li>Which number would you put in front of your board?</li>
+      <li>Does &ldquo;revenue at plants rated High&rdquo; match how your board thinks about exposure?</li>
+      <li>Which hazards are missing for your operations?</li>
+      <li>Which next-version feature would you use first?</li>
+    </ol>
+    <p><a class="btn" id="fb-btn" href="#" target="_blank" rel="noopener">Open the feedback form</a></p></div></section>
+<section class="view" id="handover" aria-labelledby="h-ho"><div class="panel">
+    <h2 id="h-ho">Handover: build spec for v1</h2>
+    <p class="intro">The one-page ticket for the developer who builds this for real. It is meant to be buildable without a call.</p>
+    <div class="ticket-actions"><button type="button" class="btn" id="ho-print">Print or save as PDF</button><button type="button" class="btn ghost" id="ho-md">Download as Markdown</button></div>
+    <article class="ticket" id="ticket"></article></div></section>
+<section class="view" id="method" aria-labelledby="h-me"><div class="panel">
+    <h2 id="h-me">Sources, assumptions and words used</h2>
+    <p class="intro">Where each figure comes from, what to be careful about, and what we assumed.</p>
+    <div class="scrollx"><table class="src-table" id="src-table"></table></div>
+    <h3 style="margin-bottom:10px">Assumptions</h3>
+    <ol class="asm" id="asm"></ol>
+    <h3 style="margin:36px 0 6px">Words used in this tool</h3>
+    <dl class="cols2" id="gloss"></dl></div></section>
+</main>
+<footer>Nimbus Cement Ltd and Meera Iyer are fictional. The plant data is invented for the exercise.</footer>
+</div></div>
+</div></div>
+<aside id="drawer" role="dialog" aria-modal="false" aria-labelledby="d-title" aria-hidden="true"></aside>
+<div id="scrim"></div>
+<div id="pop" role="tooltip"></div>
+<div id="tip"></div>
+
+<script>
+const DATA = {"plants":{"P01":{"name":"Nimbus Chittorgarh Works","town":"Chittorgarh","state":"Rajasthan","type":"Integrated","lat":24.8887,"lon":74.6269,"revenue":1749,"asset":3200,"employees":820,"capacity":4.0,"water_source":"Groundwater","coastal":false,"heat":{"obs":52.1,"d45":1.6,"tmax_p99":44.5,"delta_low":1.8,"delta_med":2.4,"delta_high":5.8,"n_up":3,"y2040_med":54.5,"y2040_low":53.9,"y2040_high":57.9,"series":{"2001":34,"2002":75,"2003":54,"2004":55,"2005":43,"2006":48,"2007":63,"2008":33,"2009":55,"2010":74,"2011":53,"2012":51,"2013":35,"2014":58,"2015":48,"2016":58,"2017":62,"2018":63,"2019":58,"2020":48,"2021":37,"2022":77,"2023":19,"2024":47,"2025":52}},"rain":{"annual_mm":686,"max_1day_mm":54.6,"series_max1d":{"2001":62.3,"2002":29.7,"2003":33.2,"2004":85.0,"2005":38.5,"2006":53.7,"2007":32.0,"2008":52.6,"2009":35.1,"2010":39.9,"2011":37.2,"2012":92.2,"2013":43.2,"2014":50.8,"2015":43.0,"2016":115.1,"2017":44.5,"2018":42.8,"2019":76.3,"2020":37.4,"2021":44.3,"2022":78.7,"2023":48.6,"2024":86.3,"2025":62.3}},"river":null,"water":{"score_now":4.96,"label_now":"Extremely High (>80%)","cat_now":4,"future":{"opt":{"2030":4.96,"2050":4.94,"2040_interp":4.95},"bau":{"2030":4.97,"2050":4.98,"2040_interp":4.97},"pes":{"2030":4.95,"2050":4.96,"2040_interp":4.95}},"local_freshwater":true}},"P02":{"name":"Nimbus Satna Works","town":"Satna","state":"Madhya Pradesh","type":"Integrated","lat":24.6005,"lon":80.8322,"revenue":1511,"asset":2700,"employees":760,"capacity":3.5,"water_source":"Reservoir","coastal":false,"heat":{"obs":56.4,"d45":6.8,"tmax_p99":45.5,"delta_low":0.9,"delta_med":2.3,"delta_high":4.7,"n_up":3,"y2040_med":58.7,"y2040_low":57.3,"y2040_high":61.1,"series":{"2001":36,"2002":75,"2003":70,"2004":65,"2005":58,"2006":57,"2007":69,"2008":51,"2009":72,"2010":91,"2011":51,"2012":71,"2013":51,"2014":67,"2015":56,"2016":74,"2017":77,"2018":71,"2019":67,"2020":29,"2021":25,"2022":76,"2023":44,"2024":58,"2025":43}},"rain":{"annual_mm":1086,"max_1day_mm":76.8,"series_max1d":{"2001":88.6,"2002":67.8,"2003":93.9,"2004":79.5,"2005":157.1,"2006":38.7,"2007":34.1,"2008":51.3,"2009":38.7,"2010":47.5,"2011":78.1,"2012":61.8,"2013":53.3,"2014":65.5,"2015":53.5,"2016":134.8,"2017":79.8,"2018":53.8,"2019":70.8,"2020":70.1,"2021":55.0,"2022":50.9,"2023":75.1,"2024":84.6,"2025":235.5}},"river":null,"water":{"score_now":4.31,"label_now":"Extremely High (>80%)","cat_now":4,"future":{"opt":{"2030":4.27,"2050":4.15,"2040_interp":4.21},"bau":{"2030":4.19,"2050":4.24,"2040_interp":4.21},"pes":{"2030":4.16,"2050":4.22,"2040_interp":4.19}},"local_freshwater":true}},"P03":{"name":"Nimbus Chandrapur Works","town":"Chandrapur","state":"Maharashtra","type":"Integrated","lat":19.9615,"lon":79.2961,"revenue":1248,"asset":2300,"employees":690,"capacity":3.0,"water_source":"River (Wardha)","coastal":false,"heat":{"obs":67.8,"d45":13.8,"tmax_p99":46.4,"delta_low":-6.2,"delta_med":3.0,"delta_high":4.0,"n_up":2,"y2040_med":70.8,"y2040_low":61.6,"y2040_high":71.8,"series":{"2001":58,"2002":80,"2003":77,"2004":82,"2005":84,"2006":58,"2007":77,"2008":55,"2009":90,"2010":88,"2011":62,"2012":81,"2013":62,"2014":75,"2015":59,"2016":78,"2017":73,"2018":69,"2019":87,"2020":54,"2021":56,"2022":86,"2023":57,"2024":60,"2025":58}},"rain":{"annual_mm":1269,"max_1day_mm":78.0,"series_max1d":{"2001":71.6,"2002":69.3,"2003":89.4,"2004":43.9,"2005":89.8,"2006":97.2,"2007":89.2,"2008":36.7,"2009":54.5,"2010":54.2,"2011":41.7,"2012":71.9,"2013":111.5,"2014":87.5,"2015":90.4,"2016":64.3,"2017":127.7,"2018":67.9,"2019":93.2,"2020":43.8,"2021":55.3,"2022":146.0,"2023":99.4,"2024":66.5,"2025":86.0}},"river":{"source":"river cell (19.875, 79.225)","mean_m3s":479.1,"annual_max_mean":7068,"annual_max_peak":15275,"peak_year":2010,"annual_max_1997_2010":6950,"annual_max_2011_2025":7178},"water":{"score_now":4.06,"label_now":"Extremely High (>80%)","cat_now":4,"future":{"opt":{"2030":4.03,"2050":3.88,"2040_interp":3.96},"bau":{"2030":4.02,"2050":4.16,"2040_interp":4.09},"pes":{"2030":4.16,"2050":4.0,"2040_interp":4.08}},"local_freshwater":true}},"P04":{"name":"Nimbus Nalgonda Works","town":"Nalgonda","state":"Telangana","type":"Integrated","lat":17.0575,"lon":79.2671,"revenue":999,"asset":1800,"employees":540,"capacity":2.5,"water_source":"Groundwater","coastal":false,"heat":{"obs":56.7,"d45":2.7,"tmax_p99":44.7,"delta_low":-2.7,"delta_med":4.0,"delta_high":11.2,"n_up":2,"y2040_med":60.7,"y2040_low":54.0,"y2040_high":67.9,"series":{"2001":54,"2002":68,"2003":67,"2004":40,"2005":52,"2006":36,"2007":55,"2008":39,"2009":62,"2010":77,"2011":51,"2012":72,"2013":52,"2014":68,"2015":39,"2016":66,"2017":67,"2018":50,"2019":77,"2020":57,"2021":45,"2022":59,"2023":53,"2024":51,"2025":42}},"rain":{"annual_mm":800,"max_1day_mm":51.5,"series_max1d":{"2001":49.2,"2002":29.1,"2003":37.8,"2004":40.1,"2005":60.8,"2006":72.6,"2007":77.0,"2008":93.9,"2009":65.0,"2010":55.9,"2011":28.3,"2012":35.4,"2013":55.1,"2014":44.3,"2015":26.3,"2016":27.1,"2017":67.4,"2018":31.0,"2019":21.6,"2020":83.5,"2021":57.7,"2022":43.4,"2023":56.3,"2024":70.5,"2025":57.0}},"river":null,"water":{"score_now":4.04,"label_now":"Extremely High (>80%)","cat_now":4,"future":{"opt":{"2030":3.99,"2050":3.94,"2040_interp":3.97},"bau":{"2030":3.97,"2050":4.05,"2040_interp":4.01},"pes":{"2030":4.03,"2050":4.02,"2040_interp":4.03}},"local_freshwater":true}},"P05":{"name":"Nimbus Ariyalur Works","town":"Ariyalur","state":"Tamil Nadu","type":"Integrated","lat":11.1401,"lon":79.0786,"revenue":868,"asset":1500,"employees":480,"capacity":2.0,"water_source":"Groundwater","coastal":false,"heat":{"obs":6.7,"d45":0.0,"tmax_p99":40.4,"delta_low":2.8,"delta_med":5.6,"delta_high":12.4,"n_up":3,"y2040_med":12.3,"y2040_low":9.5,"y2040_high":19.1,"series":{"2001":7,"2002":5,"2003":8,"2004":8,"2005":1,"2006":7,"2007":8,"2008":1,"2009":9,"2010":5,"2011":0,"2012":5,"2013":13,"2014":4,"2015":1,"2016":8,"2017":17,"2018":0,"2019":17,"2020":4,"2021":2,"2022":0,"2023":4,"2024":15,"2025":0}},"rain":{"annual_mm":1060,"max_1day_mm":64.4,"series_max1d":{"2001":43.7,"2002":52.8,"2003":51.1,"2004":93.7,"2005":104.1,"2006":34.9,"2007":83.1,"2008":86.9,"2009":48.0,"2010":59.4,"2011":50.2,"2012":64.2,"2013":52.8,"2014":43.9,"2015":68.2,"2016":72.8,"2017":53.5,"2018":45.3,"2019":61.5,"2020":84.3,"2021":64.5,"2022":72.8,"2023":53.0,"2024":100.6,"2025":65.5}},"river":null,"water":{"score_now":3.99,"label_now":"High (40-80%)","cat_now":3,"future":{"opt":{"2030":4.07,"2050":3.97,"2040_interp":4.02},"bau":{"2030":3.81,"2050":4.17,"2040_interp":3.99},"pes":{"2030":3.85,"2050":3.99,"2040_interp":3.92}},"local_freshwater":true}},"P06":{"name":"Nimbus Baloda Bazar Works","town":"Baloda Bazar","state":"Chhattisgarh","type":"Integrated","lat":21.6566,"lon":82.1606,"revenue":1275,"asset":2350,"employees":700,"capacity":3.0,"water_source":"Canal (Mahanadi system)","coastal":false,"heat":{"obs":59.1,"d45":11.9,"tmax_p99":46.2,"delta_low":-5.3,"delta_med":-1.8,"delta_high":3.7,"n_up":1,"y2040_med":57.3,"y2040_low":53.8,"y2040_high":62.8,"series":{"2001":57,"2002":77,"2003":73,"2004":73,"2005":75,"2006":56,"2007":71,"2008":57,"2009":85,"2010":84,"2011":48,"2012":74,"2013":56,"2014":74,"2015":50,"2016":74,"2017":78,"2018":60,"2019":78,"2020":28,"2021":42,"2022":76,"2023":54,"2024":58,"2025":43}},"rain":{"annual_mm":1330,"max_1day_mm":92.1,"series_max1d":{"2001":64.7,"2002":95.8,"2003":51.5,"2004":81.5,"2005":108.6,"2006":79.1,"2007":143.8,"2008":99.0,"2009":150.2,"2010":78.7,"2011":87.1,"2012":74.5,"2013":93.0,"2014":96.0,"2015":66.8,"2016":61.5,"2017":124.3,"2018":56.4,"2019":131.8,"2020":160.2,"2021":86.7,"2022":98.4,"2023":104.2,"2024":57.1,"2025":52.0}},"river":{"source":"river cell (21.725, 82.275)","mean_m3s":502.0,"annual_max_mean":6531,"annual_max_peak":13458,"peak_year":2003,"annual_max_1997_2010":6677,"annual_max_2011_2025":6394},"water":{"score_now":3.67,"label_now":"High (40-80%)","cat_now":3,"future":{"opt":{"2030":3.8,"2050":3.63,"2040_interp":3.72},"bau":{"2030":3.69,"2050":3.74,"2040_interp":3.72},"pes":{"2030":3.75,"2050":3.7,"2040_interp":3.73}},"local_freshwater":true}},"P07":{"name":"Nimbus Mundra Grinding Unit","town":"Mundra","state":"Gujarat","type":"Grinding unit","lat":22.839,"lon":69.7219,"revenue":848,"asset":650,"employees":210,"capacity":2.0,"water_source":"Desalinated seawater","coastal":true,"heat":{"obs":21.6,"d45":0.0,"tmax_p99":41.8,"delta_low":1.3,"delta_med":2.9,"delta_high":3.1,"n_up":3,"y2040_med":24.5,"y2040_low":22.9,"y2040_high":24.7,"series":{"2001":22,"2002":31,"2003":18,"2004":14,"2005":13,"2006":15,"2007":25,"2008":4,"2009":19,"2010":32,"2011":16,"2012":6,"2013":7,"2014":20,"2015":23,"2016":18,"2017":21,"2018":31,"2019":21,"2020":27,"2021":9,"2022":28,"2023":6,"2024":21,"2025":34}},"rain":{"annual_mm":588,"max_1day_mm":84.7,"series_max1d":{"2001":34.5,"2002":36.8,"2003":97.5,"2004":43.5,"2005":31.0,"2006":106.9,"2007":93.0,"2008":60.4,"2009":85.7,"2010":56.2,"2011":120.0,"2012":28.1,"2013":178.6,"2014":79.6,"2015":163.7,"2016":34.6,"2017":80.3,"2018":35.1,"2019":160.5,"2020":84.6,"2021":53.1,"2022":77.2,"2023":184.9,"2024":122.1,"2025":70.8}},"river":null,"water":{"score_now":4.79,"label_now":"Extremely High (>80%)","cat_now":4,"future":{"opt":{"2030":4.8,"2050":4.73,"2040_interp":4.76},"bau":{"2030":4.78,"2050":4.8,"2040_interp":4.79},"pes":{"2030":4.79,"2050":4.76,"2040_interp":4.78}},"local_freshwater":false}},"P08":{"name":"Nimbus Paradip Grinding Unit","town":"Paradip","state":"Odisha","type":"Grinding unit","lat":20.3165,"lon":86.6114,"revenue":536,"asset":480,"employees":180,"capacity":1.5,"water_source":"Municipal supply","coastal":true,"heat":{"obs":0.0,"d45":0.0,"tmax_p99":35.8,"delta_low":0.3,"delta_med":0.6,"delta_high":1.3,"n_up":3,"y2040_med":0.6,"y2040_low":0.3,"y2040_high":1.3,"series":{"2001":0,"2002":0,"2003":0,"2004":0,"2005":0,"2006":0,"2007":0,"2008":0,"2009":0,"2010":0,"2011":0,"2012":0,"2013":0,"2014":0,"2015":0,"2016":0,"2017":0,"2018":0,"2019":0,"2020":0,"2021":0,"2022":0,"2023":0,"2024":0,"2025":0}},"rain":{"annual_mm":1899,"max_1day_mm":87.6,"series_max1d":{"2001":75.0,"2002":38.1,"2003":68.3,"2004":57.9,"2005":65.5,"2006":86.0,"2007":111.8,"2008":108.4,"2009":80.3,"2010":64.4,"2011":54.5,"2012":40.8,"2013":82.3,"2014":107.0,"2015":52.5,"2016":100.5,"2017":74.1,"2018":112.5,"2019":104.5,"2020":177.2,"2021":130.9,"2022":66.0,"2023":106.8,"2024":179.4,"2025":46.5}},"river":{"source":"own 5km cell","mean_m3s":2230.4,"annual_max_mean":18995,"annual_max_peak":34593,"peak_year":2003,"annual_max_1997_2010":18921,"annual_max_2011_2025":19063},"water":{"score_now":2.77,"label_now":"Medium - High (20-40%)","cat_now":2,"future":{"opt":{"2030":2.72,"2050":2.7,"2040_interp":2.71},"bau":{"2030":2.67,"2050":2.74,"2040_interp":2.71},"pes":{"2030":2.73,"2050":2.75,"2040_interp":2.74}},"local_freshwater":false}},"P09":{"name":"Nimbus Durgapur Grinding Unit","town":"Durgapur","state":"West Bengal","type":"Grinding unit","lat":23.5204,"lon":87.3119,"revenue":624,"asset":470,"employees":170,"capacity":1.5,"water_source":"River (Damodar)","coastal":false,"heat":{"obs":31.0,"d45":1.5,"tmax_p99":43.9,"delta_low":-5.4,"delta_med":1.6,"delta_high":11.5,"n_up":2,"y2040_med":32.6,"y2040_low":25.6,"y2040_high":42.5,"series":{"2001":21,"2002":36,"2003":51,"2004":42,"2005":45,"2006":27,"2007":23,"2008":26,"2009":25,"2010":52,"2011":8,"2012":42,"2013":31,"2014":41,"2015":21,"2016":48,"2017":34,"2018":11,"2019":47,"2020":14,"2021":25,"2022":18,"2023":49,"2024":48,"2025":16}},"rain":{"annual_mm":1398,"max_1day_mm":68.0,"series_max1d":{"2001":30.1,"2002":47.7,"2003":58.6,"2004":49.1,"2005":48.5,"2006":76.3,"2007":137.4,"2008":47.4,"2009":88.9,"2010":47.2,"2011":128.0,"2012":32.2,"2013":64.7,"2014":50.2,"2015":60.8,"2016":115.9,"2017":104.8,"2018":59.0,"2019":54.5,"2020":41.9,"2021":98.2,"2022":52.9,"2023":43.9,"2024":97.7,"2025":64.6}},"river":{"source":"river cell (23.425, 87.375)","mean_m3s":181.3,"annual_max_mean":1410,"annual_max_peak":4796,"peak_year":2002,"annual_max_1997_2010":1469,"annual_max_2011_2025":1354},"water":{"score_now":1.94,"label_now":"Low - Medium (10-20%)","cat_now":1,"future":{"opt":{"2030":2.0,"2050":2.0,"2040_interp":2.0},"bau":{"2030":1.82,"2050":2.0,"2040_interp":1.91},"pes":{"2030":1.95,"2050":2.01,"2040_interp":1.98}},"local_freshwater":true}}},"feeds":{"P07":"P01","P08":"P06","P09":"P06"},"pulled":"2026-11-22"};
+// Google Form for feedback.
+const FORM_URL = "https://forms.gle/TpSsaZpYZ2ouHsQ36";
+const BHUVAN = "https://bhuvan-app1.nrsc.gov.in/disaster/disaster.php";
+const BHUVAN_NG = "https://bhuvanmaps.nrsc.gov.in";
+const NRSC_PORTALS = "https://www.nrsc.gov.in/EO_Portals";
+
+const P = DATA.plants, FEEDS = DATA.feeds;
+const IDS = Object.keys(P);
+const TOTAL = IDS.reduce((s,i)=>s+P[i].revenue,0);
+const $ = id => document.getElementById(id);
+const fmt = n => Math.round(n).toLocaleString('en-IN');
+const pc = x => (x*100).toFixed(1)+'%';
+const esc = s => String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const short = label => label.split(' (')[0];
+const town = id => P[id].town;
+const state = {when:'now',thr:55,sel:null,filter:null};
+
+/* ---------- plain-English terms ---------- */
+const TERMS = {
+  exposure:['Exposure','How much of the business sits in places or activities that a climate hazard could disrupt. Here it means revenue at plants rated High. It is not a forecast of losses.'],
+  hazard:['Hazard','A climate event or condition that can harm operations, such as extreme heat, water shortage, river floods or cyclones.'],
+  physical:['Physical risk','Harm from the climate itself, such as heat or floods. The other half of climate risk, transition risk, is the cost of moving to a low-carbon economy.'],
+  transition:['Transition risk','The cost to a company of the shift to a low-carbon economy, such as carbon prices or tighter emission rules. Not covered in this version.'],
+  high:['Rated High','This tool\'s own rating. A plant is rated High if it is High on heat or on water stress. The cut-offs are our assumptions.'],
+  hotdays:['Hot days','Days in a year when the daily high reaches 40 °C or more, averaged over ten years. More hot days strain workers, equipment and mining.'],
+  waterstress:['Water stress','The share of the available water in a region that is taken out each year. Above 80% is \'Extremely high\': little room for a dry year.'],
+  aqueduct:['Aqueduct','WRI\'s global water-risk database, used here at state level. Its own notes say its indicators cannot be measured directly and have not been validated.'],
+  discharge:['River discharge','How much water a river carries, in cubic metres per second (m³/s). Very large peaks point to flood risk for plants near the river.'],
+  model:['Climate model','A computer simulation of the future climate. Models differ from each other, so we show the range across three, not a single answer.'],
+  median:['Median model change','The middle result of three models\' projected change. We add it to today\'s observed level to estimate about 2040.'],
+  baseline:['Baseline','The recent past used as a starting point: 2016 to 2025 for heat, and 1979 to 2019 for water stress.'],
+  clinker:['Clinker','The hard grey material baked in a kiln from limestone. It is ground into cement. A plant without clinker cannot make cement.'],
+  kiln:['Kiln plant','A plant with a kiln, the furnace that makes clinker. Two of Nimbus\'s kiln plants also ship clinker to grinding units.'],
+  grinding:['Grinding unit','A plant with no kiln. It receives clinker by rail and grinds it into cement, so it inherits the kiln plant\'s risks.'],
+  link:['Clinker link','The rail shipments of clinker from a kiln plant to a grinding unit: Chittorgarh to Mundra, and Baloda Bazar to Paradip and Durgapur.'],
+  gross:['Gross block','The book value of a plant\'s fixed assets, such as land, buildings and machinery, before depreciation. A rough figure in this data.'],
+  crore:['Crore','Ten million. Rs 1 crore is Rs 10,000,000. Written \'cr\'.'],
+  scenario:['Scenario','An assumed path for future emissions. The Open-Meteo projections used here do not offer a choice. The water data has optimistic, business-as-usual and pessimistic paths.'],
+  whatif:['What-if','A worked example with inputs you can change. The numbers are illustrative, not a forecast.'],
+  thirdparty:['Outside data','Data produced by other organisations, here NASA, Open-Meteo and WRI. Their models can be updated, which can change our figures.'],
+  closeline:['Close to a cut-off','A rating near the line between two categories. A small change in the data or the cut-off could move it.'],
+  scope1:['Scope 1','Direct CO2 emissions from a company\'s own operations, such as kilns and on-site power.'],
+  ccts:['CCTS','India\'s Carbon Credit Trading Scheme. It sets emission-intensity targets for sectors that include cement.'],
+  mvp:['MVP','Minimum viable product: a deliberately small first version, built to learn what users need next.'],
+  fedby:['Fed by a High plant','A grinding unit whose clinker comes from a kiln plant rated High. If the kiln plant is disrupted, the grinding unit is too.']
+};
+const T = (k,label) => `<button type="button" class="term" data-term="${k}">${label||TERMS[k][0].toLowerCase()}</button>`;
+
+/* ---------- rating engine ---------- */
+function rate(thr,when){
+  const R={}; const rank={Low:0,Medium:1,High:2};
+  for(const id of IDS){
+    const p=P[id];
+    const hv = when==='now'?p.heat.obs:p.heat.y2040_med;
+    const hT = hv>=thr?'High':(hv>=25?'Medium':'Low');
+    const ws = when==='now'?p.water.score_now:p.water.future.bau['2040_interp'];
+    const fresh=p.water.local_freshwater;
+    const wT = !fresh?'Low':(ws>=4?'High':(ws>=3?'Medium':'Low'));
+    const overall = rank[hT]>=rank[wT]?hT:wT;
+    const near=[];
+    if(Math.abs(hv-thr)<=3) near.push('heat');
+    if(fresh && (Math.abs(ws-4)<=0.1||Math.abs(ws-3)<=0.1)) near.push('water');
+    const range = when==='now'?null:[p.heat.y2040_low,p.heat.y2040_high];
+    R[id]={hv,hT,ws,wT,overall,near,range,splits:range?(range[0]<thr&&range[1]>=thr):false};
+  }
+  return R;
+}
+function headline(R){
+  const high=[],fed=[],other=[]; let A=0,F=0,O=0;
+  for(const id of IDS){
+    if(R[id].overall==='High'){high.push(id);A+=P[id].revenue;}
+    else if(FEEDS[id] && R[FEEDS[id]].overall==='High'){fed.push(id);F+=P[id].revenue;}
+    else {other.push(id);O+=P[id].revenue;}
+  }
+  return {high,fed,other,A,F,O,B:A+F};
+}
+function whatIf(id,D,buf){
+  const rows=[{id,loss:P[id].revenue/365*D,note:'Stops for '+D+' days'}];
+  for(const f of IDS){ if(FEEDS[f]===id) rows.push({id:f,loss:P[f].revenue/365*Math.max(0,D-buf),note:'Short of clinker after '+buf+' days'}); }
+  return rows;
+}
+const cls = t => t==='High'?'hi':(t==='Medium'?'mid':'lo');
+const pill = t => `<span class="pill ${cls(t)}">${t}</span>`;
+
+/* ---------- overview ---------- */
+function renderOverview(){
+  const R=rate(state.thr,state.when), H=headline(R);
+  const when = state.when==='now'?'Today':'By about 2040';
+  $('h-over').innerHTML = `${when}, Rs ${fmt(H.A)} cr of Nimbus&rsquo;s revenue (${Math.round(H.A/TOTAL*100)}%) comes from plants ${T('high','rated High')} for heat or water stress. Counting the grinding units those plants feed, it is Rs ${fmt(H.B)} cr (${Math.round(H.B/TOTAL*100)}%).`;
+  $('lede').innerHTML = `This shows where revenue sits against two ${T('hazard','climate hazards')}. It is ${T('exposure','exposure')}, not an estimate of losses. Rs ${fmt(TOTAL)} cr is Nimbus&rsquo;s revenue across nine plants for 2025-26.`;
+  $('thr-out').textContent = state.thr+' days';
+  $('v-now').setAttribute('aria-pressed',state.when==='now'); $('v-40').setAttribute('aria-pressed',state.when==='40');
+  const segs=[
+    {k:'hi',cls:'s-hi',v:H.A,name:'Rated High',ids:H.high},
+    {k:'fed',cls:'s-fed',v:H.F,name:'Fed by a High plant',ids:H.fed},
+    {k:'none',cls:'s-none',v:H.O,name:'Other plants',ids:H.other}];
+  const label=segs.map(s=>`${s.name}: ${pc(s.v/TOTAL)} of revenue, ${s.ids.map(town).join(', ')||'none'}`).join('. ');
+  const el=$('split'); el.setAttribute('aria-label','Share of revenue. '+label);
+  el.innerHTML=`<div class="split">${segs.filter(s=>s.v>0).map(s=>{
+     const share=s.v/TOTAL*100;
+     return `<div class="${s.cls}" style="flex:${s.v} 1 0" data-tip="<b>${s.name}</b>: Rs ${fmt(s.v)} cr, ${pc(s.v/TOTAL)}">${share>=11?pc(s.v/TOTAL):''}</div>`;}).join('')}</div>`;
+  $('legend').innerHTML=segs.map(s=>`<span><i style="background:var(--${s.k==='hi'?'hi':s.k==='fed'?'fed':'none'})"></i><span><b style="font-weight:600">${s.k==='fed'?T('fedby',s.name):s.name}</b> <small>${s.ids.map(town).join(', ')||'none'}</small></span></span>`).join('');
+  const nearN=IDS.filter(i=>R[i].near.length).length;
+  let note = state.when==='now'
+    ? `Slide the heat cut-off to see how much the answer depends on it. Baloda Bazar is the plant that moves: at a cut-off of 60 it drops out of High, and takes Paradip and Durgapur with it.`
+    : `This is the median of three models added to today&rsquo;s observed level. ${nearN} plants have a rating ${T('closeline','close to a cut-off')}, so treat 2040 as a range, not a point.`;
+  $('split-note').innerHTML=note;
+  const topEx=[...IDS].sort((a,b)=>P[b].revenue-P[a].revenue);
+  const chev='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+  const K=[[null,'Total revenue','Rs '+fmt(TOTAL)+' cr','9 plants, 2025-26','Show all plants'],['high','Rated High',H.high.length+' of 9 plants','Rs '+fmt(H.A)+' cr','Show these plants'],['fed','Fed by a High plant',H.fed.length+' grinding units','Rs '+fmt(H.F)+' cr','Show these plants'],['near','Close to a cut-off',nearN+' plants','Ratings that could move','Show these plants']];
+  $('kpis').innerHTML=K.map(k=>`<button type="button" class="kpi" data-filter="${k[0]||''}" aria-pressed="${state.filter===k[0]}"><span>${k[1]}</span><b>${k[2]}</b><small>${k[3]}</small><span class="go">${k[4]}${chev}</span></button>`).join('');
+  state.H=H;
+  renderTable(R,H);
+  if(state.sel) renderDrawer(state.sel);
+}
+
+/* ---------- plant table ---------- */
+const FLT={high:'Rated High',fed:'Fed by a High plant',near:'Close to a cut-off'};
+function renderTable(R,H){
+  let order=[...IDS].sort((a,b)=>P[b].revenue-P[a].revenue);
+  if(state.filter==='high') order=order.filter(i=>H.high.includes(i));
+  if(state.filter==='fed') order=order.filter(i=>H.fed.includes(i));
+  if(state.filter==='near') order=order.filter(i=>R[i].near.length);
+  $('thint').innerHTML = state.filter
+    ? `<span class="chip">Showing: ${FLT[state.filter]}, ${order.length} of 9 plants <button type="button" id="clr">Show all</button></span>`
+    : `Select any plant to see why it is rated the way it is. The tiles above also filter this table.`;
+  const cl=$('clr'); if(cl) cl.addEventListener('click',()=>{state.filter=null;renderOverview();});
+  const maxRev=Math.max(...IDS.map(i=>P[i].revenue));
+  const head=`<thead><tr><th scope="col">Plant</th><th scope="col">Revenue, Rs cr</th><th scope="col">Heat</th><th scope="col">${T('waterstress','Water stress')}</th><th scope="col">River flood</th><th scope="col">Cyclone</th><th scope="col">Overall</th><th scope="col"><span class="vh">Open details</span></th></tr></thead>`;
+  const rows=order.map(id=>{
+    const p=P[id], r=R[id];
+    const heatTxt = state.when==='now'
+      ? `${Math.round(r.hv)} days a year`
+      : `${Math.round(r.hv)} days (${Math.round(r.range[0])} to ${Math.round(r.range[1])})`;
+    const hn = r.near.includes('heat')?`<span class="sub near">Close to the cut-off</span>`:'';
+    const hs = r.splits?`<span class="sub near">Models split across the cut-off</span>`:'';
+    const waterTxt = p.water.local_freshwater
+      ? `${esc(p.state)} is ${esc(short(p.water.label_now))}`
+      : `Not tied to local fresh water (${esc(p.water_source.toLowerCase())})`;
+    const wn = r.near.includes('water')?`<span class="sub near">Close to a cut-off</span>`:'';
+    const river = p.river?`${fmt(p.river.annual_max_mean)} m³/s yearly peak<span class="sub">Shown, not rated</span>`:`<span class="sub" style="margin:0">Not used</span>`;
+    const cyc = p.coastal?`Not scored<span class="sub"><a href="${BHUVAN}" target="_blank" rel="noopener">Check ISRO Bhuvan</a></span>`:`<span class="sub" style="margin:0">Inland, not scored</span>`;
+    let ov = pill(r.overall);
+    if(FEEDS[id]){ const k=FEEDS[id]; ov += `<span class="sub">Fed by ${esc(town(k))}${R[k].overall==='High'?', rated High':''}</span>`; }
+    else if(IDS.some(f=>FEEDS[f]===id)){ ov += `<span class="sub">Feeds ${IDS.filter(f=>FEEDS[f]===id).map(town).join(' and ')}</span>`; }
+    return `<tr class="row" data-id="${id}">
+      <td><button type="button" class="pname" data-open="${id}" aria-label="${esc(p.name)}, open details">${esc(p.town)}</button><span class="sub">${esc(p.type)}, ${esc(p.state)}</span></td>
+      <td><div class="revbar"><i class="${cls(r.overall)}" style="width:${Math.round(p.revenue/maxRev*80)}px" aria-hidden="true"></i><b>${fmt(p.revenue)}</b></div></td>
+      <td>${pill(r.hT)}<span class="sub">${heatTxt}</span>${hn}${hs}</td>
+      <td>${pill(r.wT)}<span class="sub">${waterTxt}</span>${wn}</td>
+      <td>${river}</td><td>${cyc}</td><td>${ov}</td><td><span class="opn">Details <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span></td></tr>`;
+  }).join('');
+  $('ptable').innerHTML=head+`<tbody>${rows}</tbody>`;
+}
+
+/* ---------- drawer ---------- */
+function whyText(id,r){
+  const p=P[id], bits=[];
+  const heatS = `about ${Math.round(r.hv)} days a year at or above 40 °C, against a cut-off of ${state.thr}`;
+  const waterS = p.water.local_freshwater
+    ? `${p.state} is rated ${short(p.water.label_now).toLowerCase()} for water stress and this plant draws on ${p.water_source.toLowerCase()}`
+    : `its water comes from ${p.water_source.toLowerCase()}, which is not counted as local fresh water in this version`;
+  if(r.overall==='High'){
+    if(r.hT==='High') bits.push('heat ('+heatS+')');
+    if(r.wT==='High') bits.push('water ('+waterS+')');
+    return `Rated High because of ${bits.join(' and ')}.`;
+  }
+  return `Not rated High. Heat is ${r.hT} (${heatS}). Water is ${r.wT} (${waterS}).`;
+}
+function heatChart(id,r){
+  const p=P[id], W=520,H=240,L=36,Tp=16,B=28,pw=300,ph=H-Tp-B;
+  const years=Object.keys(p.heat.series).map(Number), vals=years.map(y=>p.heat.series[y]);
+  const ymax=Math.max(100,Math.ceil(Math.max(...vals,p.heat.y2040_high,state.thr)/25)*25);
+  const y=v=>Tp+ph-(v/ymax)*ph, slot=pw/years.length, bw=8;
+  let g='';
+  for(let t=0;t<=ymax;t+=25){ g+=`<line x1="${L}" x2="${L+pw+150}" y1="${y(t)}" y2="${y(t)}" stroke="var(--rule)" stroke-width="1"/><text x="${L-6}" y="${y(t)+4}" text-anchor="end" font-size="10.5" fill="var(--muted)">${t}</text>`; }
+  let bars='';
+  years.forEach((yr,i)=>{
+    const v=p.heat.series[yr], x=L+i*slot+(slot-bw)/2, top=y(v), base=y(0), rr=Math.min(3,(base-top)/2);
+    if(v>0) bars+=`<path d="M${x},${base} V${top+rr} Q${x},${top} ${x+rr},${top} H${x+bw-rr} Q${x+bw},${top} ${x+bw},${top+rr} V${base} Z" fill="var(--fed)"/>`;
+    bars+=`<rect x="${L+i*slot}" y="${Tp}" width="${slot}" height="${ph}" fill="transparent" data-tip="<b>${v} days</b> in ${yr}" tabindex="0" aria-label="${yr}: ${v} days"/>`;
+  });
+  let xl=''; [2001,2010,2020,2025].forEach(yr=>{const i=years.indexOf(yr); xl+=`<text x="${L+i*slot+slot/2}" y="${H-8}" text-anchor="middle" font-size="10.5" fill="var(--muted)">${yr}</text>`;});
+  const thrY=y(state.thr);
+  const xt=L+pw+46, x40=L+pw+112, ring='stroke="var(--surface)" stroke-width="2"';
+  const right=`
+    <line x1="${x40}" x2="${x40}" y1="${y(p.heat.y2040_high)}" y2="${y(p.heat.y2040_low)}" stroke="var(--muted)" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="${xt}" cy="${y(p.heat.obs)}" r="5" fill="var(--ink)" ${ring} data-tip="<b>${p.heat.obs}</b> days, average 2016 to 2025" tabindex="0" aria-label="Average 2016 to 2025: ${p.heat.obs} days"/>
+    <circle cx="${x40}" cy="${y(p.heat.y2040_med)}" r="5" fill="var(--ink)" ${ring} data-tip="<b>${p.heat.y2040_med}</b> days about 2040, range ${p.heat.y2040_low} to ${p.heat.y2040_high}" tabindex="0" aria-label="About 2040: ${p.heat.y2040_med} days, range ${p.heat.y2040_low} to ${p.heat.y2040_high}"/>
+    <text x="${xt}" y="${H-8}" text-anchor="middle" font-size="10.5" fill="var(--muted)">2016-25</text>
+    <text x="${x40}" y="${H-8}" text-anchor="middle" font-size="10.5" fill="var(--muted)">About 2040</text>
+    <text x="${xt}" y="${y(p.heat.obs)-10}" text-anchor="middle" font-size="11" font-weight="600" fill="var(--ink)">${Math.round(p.heat.obs)}</text>
+    <text x="${x40+10}" y="${y(p.heat.y2040_med)+4}" font-size="11" font-weight="600" fill="var(--ink)">${Math.round(p.heat.y2040_med)}</text>`;
+  const thrLine=`<line x1="${L}" x2="${L+pw+150}" y1="${thrY}" y2="${thrY}" stroke="var(--hi)" stroke-width="2"/><text x="${L}" y="9" font-size="11" font-weight="600" fill="var(--ink)">Line = cut-off, ${state.thr} days</text>`;
+  const twin=`<div class="scrollx"><table class="twin"><tr><th>Year</th>${years.map(v=>`<th>${v}</th>`).join('')}</tr><tr><th>Days</th>${vals.map(v=>`<td>${v}</td>`).join('')}</tr></table></div>`;
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Days a year at or above 40 degrees Celsius, 2001 to 2025, with the cut-off and the 2040 estimate">${g}${bars}${thrLine}${right}${xl}</svg>
+    <details><summary>Show the numbers</summary>${twin}<p class="src">Days per year with a daily high of 40 °C or more, NASA POWER, 2001 to 2025. About 2040: today&rsquo;s average plus the ${T('median','median model change')} of three ${T('model','climate models')} (Open-Meteo), range ${p.heat.y2040_low} to ${p.heat.y2040_high}. ${p.heat.n_up} of 3 models show an increase.</p></details>`;
+}
+function waterScale(id){
+  const p=P[id], f=p.water.future, W=470,H=124,L=20,sw=86;
+  const x=s=>L+s*sw;
+  const zones=[['Low','under 10%'],['Low to medium','10 to 20%'],['Medium to high','20 to 40%'],['High','40 to 80%'],['Extremely high','over 80%']];
+  let z=''; zones.forEach((zn,i)=>{ z+=`<rect x="${x(i)+1}" y="26" width="${sw-2}" height="16" rx="3" fill="${['#E7E9E4','#DDE0DA','#D1D5CE','#C2C7C0','#B2B8B0'][i]}"/><text x="${x(i)+sw/2}" y="62" text-anchor="middle" font-size="10.5" fill="var(--ink)">${zn[0]}</text><text x="${x(i)+sw/2}" y="75" text-anchor="middle" font-size="10" fill="var(--muted)">${zn[1]}</text>`; });
+  const sc=[f.opt['2040_interp'],f.bau['2040_interp'],f.pes['2040_interp']], lo=Math.min(...sc), hi=Math.max(...sc);
+  const ring='stroke="var(--surface)" stroke-width="2"';
+  const m=`<line x1="${x(lo)}" x2="${x(hi)}" y1="34" y2="34" stroke="var(--muted)" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="${x(f.bau['2040_interp'])}" cy="34" r="5" fill="var(--ink)" ${ring} data-tip="<b>${f.bau['2040_interp']}</b> about 2040, business as usual; range ${lo} to ${hi}" tabindex="0" aria-label="About 2040: ${f.bau['2040_interp']}"/>
+    <circle cx="${x(p.water.score_now)}" cy="34" r="5" fill="var(--hi)" ${ring} data-tip="<b>${p.water.score_now}</b> today (baseline)" tabindex="0" aria-label="Today: ${p.water.score_now}"/>
+    <text x="${Math.min(Math.max(x(p.water.score_now),52),W-52)}" y="14" text-anchor="middle" font-size="11" font-weight="600" fill="var(--ink)">Today ${p.water.score_now}</text>
+    <text x="${W-8}" y="112" text-anchor="end" font-size="10.5" fill="var(--muted)">About 2040: ${lo===hi?lo:lo+' to '+hi}</text>`;
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(p.state)} water stress score today ${p.water.score_now} and about 2040 ${lo} to ${hi}, on a scale of 0 to 5">${z}${m}</svg>
+    <details><summary>Show the numbers</summary><div class="scrollx"><table class="twin"><tr><th>Scenario</th><th>2030</th><th>2040 (interpolated)</th><th>2050</th></tr>
+    ${[['Optimistic','opt'],['Business as usual','bau'],['Pessimistic','pes']].map(([n,k])=>`<tr><th>${n}</th><td>${f[k]['2030']}</td><td>${f[k]['2040_interp']}</td><td>${f[k]['2050']}</td></tr>`).join('')}</table></div>
+    <p class="src">${T('aqueduct','WRI Aqueduct 4.0')} state-level water stress score, weighted by industrial water demand, 0 to 5. Today is the 1979 to 2019 ${T('baseline','baseline')}. 2040 is the average of the 2030 and 2050 scores. The score describes ${esc(p.state)}, not this plant&rsquo;s own water source.</p></details>`;
+}
+function renderDrawer(id){
+  const p=P[id], R=rate(state.thr,state.when), r=R[id];
+  const fedNames=IDS.filter(f=>FEEDS[f]===id);
+  let chain='';
+  if(fedNames.length){
+    const rev=p.revenue+fedNames.reduce((s,f)=>s+P[f].revenue,0);
+    chain=`<p>This ${T('kiln','kiln plant')} ships ${T('clinker','clinker')} by rail to ${fedNames.map(town).join(' and ')}. If it stopped, Rs ${fmt(rev)} cr of yearly revenue (${pc(rev/TOTAL)}) depends on it: its own Rs ${fmt(p.revenue)} cr plus Rs ${fmt(rev-p.revenue)} cr at ${fedNames.map(town).join(' and ')}.</p>`;
+  } else if(FEEDS[id]){
+    const k=FEEDS[id];
+    chain=`<p>This ${T('grinding','grinding unit')} gets its clinker from ${esc(town(k))}, which is rated ${R[k].overall}. A problem at ${esc(town(k))} reaches this plant even if its own site is safe.</p>`;
+  } else chain=`<p>This plant has its own kiln and does not depend on another plant for clinker.</p>`;
+  const river = p.river
+    ? `<p>The yearly peak flow of the nearest large river cell averages ${fmt(p.river.annual_max_mean)} m³/s. The highest year was ${p.river.peak_year}, at ${fmt(p.river.annual_max_peak)} m³/s. The average peak was ${fmt(p.river.annual_max_1997_2010)} m³/s in 1997 to 2010 and ${fmt(p.river.annual_max_2011_2025)} m³/s in 2011 to 2025.</p>
+       <details><summary>How this was found</summary><p class="src">Open-Meteo Flood API, simulated ${T('discharge','river discharge')}, 1997 to 2025 (data before 1997 is empty). ${p.river.source.startsWith('own')?'The plant\'s own 5 km grid cell sits on a large river.':'The plant\'s own 5 km cell often misses the river, so we used the highest-flow cell within about 11 km. This assumes the plant sits on that river.'} Shown for information. We have no agreed rule to rate it, and there are no projections to 2040.</p></details>`
+    : `<p>No river data is used for this plant: its water comes from ${esc(p.water_source.toLowerCase())}, not a river.</p>`;
+  const cyc = p.coastal
+    ? `<p>Cyclone exposure is not scored in this version. This plant is on the coast (${p.lat.toFixed(2)}, ${p.lon.toFixed(2)}). You can check cyclone and flood layers on ISRO Bhuvan&rsquo;s disaster services. The assessment brief notes that a free account may be needed.</p><p><a class="btn ghost" href="${BHUVAN}" target="_blank" rel="noopener">Open ISRO Bhuvan disaster services</a></p><p class="src" style="font-family:var(--sans);font-size:13.5px;color:var(--muted)">ISRO&rsquo;s portal is run by ISRO and is sometimes slow or down. If it does not open, try <a href="${BHUVAN_NG}" target="_blank" rel="noopener">Bhuvan NextGen</a> or the <a href="${NRSC_PORTALS}" target="_blank" rel="noopener">NRSC list of flood and cyclone portals</a>.</p>`: `<p>This plant is inland. Cyclone exposure is not scored in this version.</p>`;
+  $('drawer').innerHTML=`
+    <button type="button" class="x" id="d-close">Close</button>
+    <h2 id="d-title" tabindex="-1">${esc(p.name)}</h2>
+    <p class="facts">${esc(p.type)} in ${esc(p.state)}. ${p.capacity} Mt a year of cement capacity. Revenue Rs ${fmt(p.revenue)} cr. ${T('gross','Gross block')} Rs ${fmt(p.asset)} cr. ${fmt(p.employees)} employees. Water from ${esc(p.water_source.toLowerCase())}.</p>
+    <div class="hz"><h3>Overall ${pill(r.overall)}</h3><p>${whyText(id,r)}</p>${r.near.length?`<p>This rating is ${T('closeline','close to a cut-off')} on ${r.near.join(' and ')}.</p>`:''}</div>
+    <div class="hz"><h3>Heat ${pill(r.hT)}</h3><p>${state.when==='now'?`${Math.round(r.hv)} ${T('hotdays','hot days')} a year on average over 2016 to 2025.`:`About ${Math.round(r.hv)} ${T('hotdays','hot days')} a year by 2040, against ${p.heat.obs} today. The models range from ${p.heat.y2040_low} to ${p.heat.y2040_high}.`}</p>${heatChart(id,r)}</div>
+    <div class="hz"><h3>Water stress ${pill(r.wT)}</h3><p>${p.water.local_freshwater?`${esc(p.state)} is rated ${esc(short(p.water.label_now).toLowerCase())} for ${T('waterstress','water stress')}, and this plant depends on ${esc(p.water_source.toLowerCase())}.`:`${esc(p.state)} is rated ${esc(short(p.water.label_now).toLowerCase())} for water stress, but this plant runs on ${esc(p.water_source.toLowerCase())}, so the state rating does not count against it.`}</p>${waterScale(id)}</div>
+    <div class="hz"><h3>River flood <span class="tag">Shown, not rated</span></h3>${river}</div>
+    <div class="hz"><h3>Cyclone <span class="tag">Not scored</span></h3>${cyc}</div>
+    <div class="hz"><h3>Clinker supply</h3>${chain}</div>`;
+  $('d-close').addEventListener('click',closeDrawer);
+}
+let lastFocus=null;
+function openDrawer(id){
+  lastFocus=document.activeElement; state.sel=id; renderDrawer(id);
+  $('drawer').classList.add('open'); $('drawer').setAttribute('aria-hidden','false'); $('scrim').classList.add('on');
+  setTimeout(()=>$('d-title').focus(),60);
+}
+function closeDrawer(){
+  state.sel=null; $('drawer').classList.remove('open'); $('drawer').setAttribute('aria-hidden','true'); $('scrim').classList.remove('on');
+  if(lastFocus) lastFocus.focus();
+}
+
+/* ---------- what-if ---------- */
+function renderWhatIf(){
+  const id=$('wi-plant').value, D=+$('wi-days').value, buf=+$('wi-buf').value;
+  $('wi-days-o').textContent=D+' days'; $('wi-buf-o').textContent=buf+' days';
+  const rows=whatIf(id,D,buf), total=rows.reduce((s,r)=>s+r.loss,0);
+  const fed=rows.slice(1);
+  let sentence=`If ${esc(town(id))} stops for ${D} days, about <b>Rs ${fmt(total)} cr</b> of revenue is interrupted (${(total/TOTAL*100).toFixed(2)}% of the year).`;
+  if(fed.length){
+    sentence+=` Rs ${fmt(rows[0].loss)} cr is at ${esc(town(id))} itself`;
+    sentence+= D>buf ? ` and Rs ${fmt(total-rows[0].loss)} cr at ${fed.map(r=>esc(town(r.id))).join(' and ')}, which run short of clinker after ${buf} days.` : `. ${fed.map(r=>esc(town(r.id))).join(' and ')} keep running because their clinker stock lasts ${buf} days.`;
+  } else sentence+=' This plant does not feed any other plant.';
+  $('wi-out').innerHTML=sentence;
+  const mx=Math.max(1,...rows.map(r=>r.loss));
+  $('wi-bars').innerHTML=rows.map(r=>`<div class="r"><div>${esc(town(r.id))}<span class="sub">${r.note}</span></div><div class="b"><i style="width:${Math.max(2,Math.round(r.loss/mx*260))}px" data-tip="<b>Rs ${fmt(r.loss)} cr</b> at ${esc(town(r.id))}" tabindex="0"></i><b>Rs ${fmt(r.loss)} cr</b></div></div>`).join('');
+  $('wi-formula').innerHTML=`How it works: a plant&rsquo;s yearly revenue is spread evenly over 365 days. A stopped plant loses revenue ÷ 365 × days stopped. A ${T('grinding','grinding unit')} it feeds loses the same per day once its clinker stock runs out, and is assumed to depend on that kiln for all its clinker. Revenue is not profit. Days stopped and stock days are illustrative ${T('whatif','what-if')} inputs.`;
+}
+
+/* ---------- next version ---------- */
+const NEXT=[
+ ['Transition risk and carbon cost',`The cost of moving to a low-carbon economy: carbon prices and ${T('ccts','CCTS')} targets. In the plant file, Chittorgarh&rsquo;s ${T('scope1','Scope 1')} emissions look like 0.95 tonnes of CO2 per tonne of cement. Taking out the clinker it ships, our working figure is about 0.64. That allocation has to be right before any cost is shown.`,'Needs: carbon price paths and emission targets we can cite.'],
+ ['Cyclone and coastal scoring','Score Mundra and Paradip for cyclones and storm surge, instead of linking out to ISRO Bhuvan.','Needs: a cyclone dataset we can read and cite.'],
+ ['River flood and extreme rain to 2040','Today these are shown but not rated, and not projected. The three models disagree on whether extreme rain gets worse.','Needs: projections that agree, or a clear way to show the disagreement.'],
+ ['Loss estimates in rupees','From where revenue sits to how much could be lost, using Nimbus&rsquo;s own downtime and repair history.','Needs: Nimbus data on past disruptions.'],
+ ['Upload your own plant file','Replace the sample plants with a company&rsquo;s own, and have ratings update.','Needs: a file format, and checks on what is uploaded.'],
+ ['A report the board can read','One-click export of the headline, plant table and sources, in plain English.','Needs: your view on what a board pack must contain.']
+];
+function renderNext(){
+  const live = !FORM_URL.includes('REPLACE_ME');
+  $('next-list').innerHTML=NEXT.map(n=>`<div class="it"><h3>${n[0]}</h3><div><p>${n[1]}</p><span class="need">${n[2]}</span></div><div>${live?`<a class="btn ghost" href="${FORM_URL}" target="_blank" rel="noopener">I would use this</a>`:`<span class="tag">Form link coming</span>`}</div></div>`).join('');
+  const b=$('fb-btn');
+  if(live){ b.href=FORM_URL; } else { b.removeAttribute('href'); b.setAttribute('aria-disabled','true'); b.textContent='Feedback form link coming'; b.removeAttribute('target'); }
+}
+
+/* ---------- handover ---------- */
+const HANDOVER={
+ title:'Build v1: Nimbus Climate Exposure (physical risk)',
+ meta:'For the developer who builds v1. Prototype data pulled 22 Nov 2026. Source of truth for numbers: the acceptance criteria below.',
+ blocks:[
+ {h:'Goal',p:'A stand-alone web app that lets Meera Iyer, Head of Sustainability at Nimbus Cement, answer her board, auditor and investors: "What is our business exposure to climate events today and by 2040?" v1 covers physical risk (heat and water stress) for the nine plants in the plant file. Transition risk is out of scope.'},
+ {h:'Build in this order',ol:[
+   'Rating engine: a pure function from plants, hazard data and the heat cut-off to ratings, the two headline figures and the what-if. Unit-test it against the acceptance numbers before writing any UI.',
+   'Data snapshot script: pulls the four sources below, writes one JSON file and records the pull date. v1 ships the snapshot. There are no live calls at runtime.',
+   'UI: headline and split bar, plant table, plant drawer with evidence and number tables, what-if, plain-English term popovers, data notice, next-version list, feedback link, this page.']},
+ {h:'Data',table:{head:['Source','Used for','Detail'],rows:[
+   ['NASA POWER daily point API','Hot days 2001-2025','Params T2M_MAX, PRECTOTCORR, community AG. About 50 km grid.'],
+   ['Open-Meteo Climate API','Heat change to 2040','Models MRI_AGCM3_2_S, EC_Earth3P_HR, CMCC_CM2_VHR4; daily temperature_2m_max, 2006-2050. No scenario choice.'],
+   ['Open-Meteo Flood API','River flow, shown not rated','river_discharge 1997-2025. For P03, P06, P09 use the highest-flow cell within about 11 km. P08 uses its own cell.'],
+   ['WRI Aqueduct 4.0 rankings (xlsx)','Water stress','Sheets province_baseline, province_future; indicator bws, weight Ind; scenarios opt, bau, pes.'],
+   ['Plant file (xlsx)','Revenue, water source, clinker links','Links from the notes column: P07 from P01; P08 and P09 from P06.']]}},
+ {h:'Rules (exact)',ul:[
+   'Hot days: days a year with a daily high of 40 °C or more. Today = mean of 2016-2025. About 2040 = today + median over the three models of (mean 2031-2050 minus mean 2006-2025). Never use a model\'s absolute value.',
+   'Heat rating: High at or above the cut-off (default 55, adjustable 40 to 70), Medium from 25, otherwise Low.',
+   'Water score: state, industrial weighting. Today = baseline. About 2040 = mean of the 2030 and 2050 business-as-usual scores; show the optimistic-to-pessimistic range.',
+   'Water rating: High if score is 4.0 or more and the water source is groundwater, reservoir, river or canal. Medium if 3.0 to under 4.0 and the same condition. Otherwise Low (desalinated and municipal count as Low).',
+   'Overall = the higher of heat and water. River flood is shown, not rated. Cyclone is not scored.',
+   'Headline A = revenue of plants rated High. Headline B = A + revenue of grinding units fed by a High plant, not already counted. Show each with its share of Rs 9,658 cr.',
+   'What-if: stopping plant X for D days interrupts revenue_X / 365 × D. Each grinding unit it feeds loses revenue / 365 × max(0, D - stock days). Defaults D 14, stock 7. Label as illustrative.']},
+ {h:'Acceptance criteria',ul:[
+   'Defaults: A = Rs 6,782 cr (70.2%), B = Rs 8,790 cr (91.0%), today and about 2040.',
+   'Heat cut-off 60: A = Rs 5,507 cr (57.0%), B = Rs 6,355 cr (65.8%).',
+   'P07 Mundra has water rating Low although Gujarat scores 4.79.',
+   'Default what-if (P01, 14 days, stock 7): about Rs 83 cr, Rs 67 cr at P01 and Rs 16 cr at P07.',
+   'Every figure shows its source and the pull date. Every technical term is explained in place. No login. Works offline after load.']},
+ {h:'Edge cases',ul:[
+   'Models disagree on direction at P03, P04, P06, P09: show the low-to-high range and flag when it crosses the cut-off.',
+   'Mark a rating "close to a cut-off" when heat is within 3 days of the cut-off or water is within 0.1 of an Aqueduct line.',
+   'Flood grid cells often miss the river and are empty before 1997. The river-cell choice assumes the plant sits on that river.',
+   'NASA POWER (about 50 km) and Aqueduct (state average) can understate local extremes. Say so beside the figures.',
+   'Grinding units are assumed fully dependent on their kiln for clinker. P08 also blends fly ash.',
+   'Revenue is not profit. The figure is where revenue sits, not a loss. Plant data is invented.']},
+ {h:'Open questions',ul:[
+   'Who owns data refresh, and how often? Providers revise their models.',
+   'Are the cut-offs (55 hot days, Aqueduct lines) Nimbus\'s to set? Who approves them?',
+   'Would the auditor accept revenue at High-rated plants as "exposure"? Margin or EBITDA may be a better base.',
+   'Which 2040 scenario? Open-Meteo offers no choice.',
+   'Cyclone and 2040 flood need data we could not reach (ISRO Bhuvan needs an account and was unreliable). Which sources can Nimbus license?']}
+ ]};
+function renderHandover(){
+  const h=HANDOVER; let html=`<h2>${esc(h.title)}</h2><p class="meta">${esc(h.meta)}</p>`;
+  h.blocks.forEach(b=>{
+    html+=`<h3>${esc(b.h)}</h3>`;
+    if(b.p) html+=`<p>${esc(b.p)}</p>`;
+    if(b.ul) html+=`<ul>${b.ul.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`;
+    if(b.ol) html+=`<ol>${b.ol.map(x=>`<li>${esc(x)}</li>`).join('')}</ol>`;
+    if(b.table) html+=`<table><thead><tr>${b.table.head.map(x=>`<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>${b.table.rows.map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+  });
+  $('ticket').innerHTML=html;
+}
+function handoverMd(){
+  const h=HANDOVER; let md=`# ${h.title}\n\n${h.meta}\n\n`;
+  h.blocks.forEach(b=>{
+    md+=`## ${b.h}\n\n`;
+    if(b.p) md+=b.p+'\n\n';
+    if(b.ul) md+=b.ul.map(x=>'- '+x).join('\n')+'\n\n';
+    if(b.ol) md+=b.ol.map((x,i)=>(i+1)+'. '+x).join('\n')+'\n\n';
+    if(b.table){ md+='| '+b.table.head.join(' | ')+' |\n| '+b.table.head.map(()=>':---').join(' | ')+' |\n'+b.table.rows.map(r=>'| '+r.join(' | ')+' |').join('\n')+'\n\n'; }
+  });
+  return md;
+}
+
+/* ---------- method ---------- */
+function renderMethod(){
+  const S=[
+   ['NASA POWER','Hot days and rainfall, 2001 to 2025','https://power.larc.nasa.gov/','A reanalysis on a grid of about 50 km. It smooths local extremes, so heat and heavy rain are probably understated.'],
+   ['Open-Meteo Climate API','Change in hot days to about 2040, three models','https://open-meteo.com/en/docs/climate-api','No choice of emissions scenario and data ends in 2050. The models disagree on direction at four plants.'],
+   ['Open-Meteo Flood API','River flow, 1997 to 2025','https://open-meteo.com/en/docs/flood-api','The 5 km cell often misses the river; empty before 1997; no future projections.'],
+   ['WRI Aqueduct 4.0','Water stress by state, today and 2030 to 2050','https://www.wri.org/data/aqueduct-40-country-rankings','A state average, not the plant\'s own aquifer. WRI says the indicators cannot be measured directly and have not been validated. Interbasin transfers are not modelled.'],
+   ['ISRO Bhuvan disaster services','Cyclone and flood map layers (link only)',BHUVAN,'Not used for any figure. A free account may be needed, and the portal is sometimes down. Fallbacks: Bhuvan NextGen and the NRSC portal list. We have not been able to open these from this prototype.'],
+   ['Nimbus plant file','Revenue, assets, water source, clinker links','','Invented for the exercise. Asset value is a rough gross block.']];
+  $('src-table').innerHTML=`<thead><tr><th>Source</th><th>Used for</th><th>Be careful</th></tr></thead><tbody>${S.map(s=>`<tr><td>${s[2]?`<a href="${s[2]}" target="_blank" rel="noopener">${s[0]}</a>`:s[0]}</td><td>${s[1]}</td><td>${s[3]}</td></tr>`).join('')}</tbody>`;
+  const A=[
+   'The plant data is invented for the exercise, and asset value is a rough gross block.',
+   'Which hazards matter to a plant depends on what it does: groundwater plants care about water stress; desalinated water insulates a plant from it. This is our judgement.',
+   'The rating cut-offs are our assumptions: 55 and 25 hot days a year (the 55 can be changed above), and the Aqueduct lines at scores 3 and 4.',
+   'Physical risk is treated as nearer-term than transition risk. We have not checked this against CCTS timelines.',
+   'Days stopped and clinker stock in the what-if are illustrative. Revenue is spread evenly over the year.',
+   'The climate projections offer no scenario choice and end in 2050.',
+   'About 2040 heat is today\'s observed level plus the median model change. We never use a model\'s own absolute value, because they differ widely from observations.',
+   'River flood and cyclone are shown or linked for today only. They are not projected to 2040.',
+   'Exposure means the revenue of plants rated High for heat or water stress, with a second figure that adds the grinding units those plants feed. It shows where revenue sits. It is not a loss estimate.'];
+  $('asm').innerHTML=A.map((a,i)=>`<li><span>A${i+1}</span><span>${a}</span></li>`).join('');
+  $('gloss').innerHTML=Object.values(TERMS).map(t=>`<dt>${t[0]}</dt><dd>${t[1]}</dd>`).join('');
+}
+
+/* ---------- tooltips and popovers ---------- */
+const pop=$('pop'), tip=$('tip'); let popFor=null;
+function showPop(btn){
+  const t=TERMS[btn.dataset.term]; if(!t) return;
+  pop.innerHTML=`<b>${t[0]}</b>${t[1]}`; pop.style.display='block'; popFor=btn;
+  const r=btn.getBoundingClientRect(), pw=pop.offsetWidth;
+  let left=r.left+window.scrollX; left=Math.min(left,window.scrollX+document.documentElement.clientWidth-pw-12); left=Math.max(left,window.scrollX+8);
+  pop.style.left=left+'px'; pop.style.top=(r.bottom+window.scrollY+8)+'px';
+}
+function hidePop(){pop.style.display='none';popFor=null;}
+document.addEventListener('click',e=>{
+  const kf=e.target.closest('.kpi');
+  if(kf){ const f=kf.dataset.filter||null; state.filter=(state.filter===f)?null:f; renderOverview(); if(state.filter) $('h-plants').scrollIntoView({behavior:'smooth',block:'start'}); return; }
+  const t=e.target.closest('.term');
+  if(t){ if(popFor===t) hidePop(); else showPop(t); e.stopPropagation(); return; }
+  if(!e.target.closest('#pop')) hidePop();
+  const o=e.target.closest('[data-open]'); if(o){ openDrawer(o.dataset.open); return; }
+  const row=e.target.closest('tr.row'); if(row && !e.target.closest('a')) openDrawer(row.dataset.id);
+});
+document.addEventListener('mouseover',e=>{const t=e.target.closest('.term'); if(t) showPop(t);});
+document.addEventListener('mouseout',e=>{const t=e.target.closest('.term'); if(t && document.activeElement!==t) hidePop();});
+document.addEventListener('focusin',e=>{const t=e.target.closest&&e.target.closest('.term'); if(t) showPop(t);});
+document.addEventListener('focusout',e=>{if(e.target.closest&&e.target.closest('.term')) hidePop();});
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ hidePop(); if(state.sel) closeDrawer(); } });
+function tipShow(e){
+  const el=e.target.closest&&e.target.closest('[data-tip]'); if(!el){tip.style.display='none';return;}
+  tip.innerHTML=el.getAttribute('data-tip'); tip.style.display='block';
+  const x=(e.clientX||el.getBoundingClientRect().left), y=(e.clientY||el.getBoundingClientRect().top);
+  tip.style.left=Math.min(x+14,window.innerWidth-tip.offsetWidth-8)+'px'; tip.style.top=(y-tip.offsetHeight-12<4?y+16:y-tip.offsetHeight-12)+'px';
+}
+document.addEventListener('pointermove',tipShow); document.addEventListener('focusin',tipShow);
+document.addEventListener('pointerleave',()=>tip.style.display='none'); document.addEventListener('focusout',()=>tip.style.display='none');
+$('scrim').addEventListener('click',closeDrawer);
+
+/* ---------- wiring ---------- */
+$('v-now').addEventListener('click',()=>{state.when='now';renderOverview();});
+$('v-40').addEventListener('click',()=>{state.when='40';renderOverview();});
+$('thr').addEventListener('input',e=>{state.thr=+e.target.value;renderOverview();});
+$('thr-reset').addEventListener('click',()=>{state.thr=55;$('thr').value=55;renderOverview();});
+$('wi-plant').innerHTML=IDS.map(i=>`<option value="${i}">${esc(P[i].town)} (${esc(P[i].type.toLowerCase())})</option>`).join('');
+$('wi-plant').value='P01';
+['wi-plant','wi-days','wi-buf'].forEach(i=>$(i).addEventListener('input',renderWhatIf));
+$('wi-reset').addEventListener('click',()=>{$('wi-plant').value='P01';$('wi-days').value=14;$('wi-buf').value=7;renderWhatIf();});
+$('ho-print').addEventListener('click',()=>window.print());
+$('ho-md').addEventListener('click',()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([handoverMd()],{type:'text/markdown'}));a.download='handover-doc.md';a.click();});
+const TITLES={dashboard:'Exposure',whatif:'What if a plant stops',next:'Next version',feedback:'Feedback',handover:'Handover',method:'Sources and assumptions'};
+function route(){
+  const k=(location.hash.replace('#/','').replace('#',''))||'dashboard'; const v=TITLES[k]?k:'dashboard';
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on',s.id===v));
+  document.querySelectorAll('[data-nav]').forEach(a=>{ if(a.dataset.nav===v) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current'); });
+  $('page-title').textContent=TITLES[v]; $('ctl').hidden=(v!=='dashboard');
+  if(state.sel && v!=='dashboard') closeDrawer();
+  window.scrollTo(0,0); document.title=TITLES[v]+' | Nimbus climate exposure';
+}
+window.addEventListener('hashchange',route);
+$('notice-x').addEventListener('click',()=>{$('notice').style.display='none';});
+renderOverview(); renderWhatIf(); renderNext(); renderHandover(); renderMethod(); route();
+</script>
+</body>
+</html>
